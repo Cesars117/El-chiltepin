@@ -74,8 +74,9 @@ export default function MenuClient({ initialProducts }: { initialProducts: Produ
         {/* Products Grid */}
         <div style={{ 
           display: 'grid', 
-          gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', 
-          gap: '2rem' 
+          gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', 
+          gap: '2.5rem',
+          padding: '0 0.5rem'
         }}>
           {filteredItems.map(product => (
             <div key={product.id} className="card animate-fade-in" style={{ 
