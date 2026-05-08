@@ -37,7 +37,7 @@ export default function Navbar() {
         <div className={styles.navLinks}>
           <Link href="/" className={styles.link}>Inicio</Link>
           <Link href="/menu" className={styles.link}>Menú</Link>
-          <Link href="/pedidos" className={styles.link}>Mis Pedidos</Link>
+          {/* <Link href="/pedidos" className={styles.link}>Mis Pedidos</Link> */}
         </div>
 
         <div className={styles.actions}>

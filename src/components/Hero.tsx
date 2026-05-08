@@ -29,7 +29,7 @@ export default function Hero() {
           <Link href="/menu" className="btn btn-primary">
             Ver Menú <Utensils size={20} />
           </Link>
-          <Link href="/pedidos" className="btn btn-outline" style={{ color: 'white', borderColor: 'white' }}>
+          <Link href="/menu" className="btn btn-outline" style={{ color: 'white', borderColor: 'white' }}>
             Hacer Pedido <ArrowRight size={20} />
           </Link>
         </div>
