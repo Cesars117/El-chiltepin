@@ -89,7 +89,7 @@ export default function CheckoutPage() {
       `*Método de Pago:* ${formData.paymentMethod}${changeText}%0A%0A` +
       `¡Gracias por su preferencia! 🌶️🐟`;
 
-    const whatsappUrl = `https://wa.me/516674511457?text=${message}`;
+    const whatsappUrl = `https://wa.me/526674511457?text=${message}`;
     
     window.open(whatsappUrl, '_blank');
     clearCart();
