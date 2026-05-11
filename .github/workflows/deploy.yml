@@ -41,6 +41,21 @@ jobs:
           # Copiamos también el archivo server.js personalizado por si se prefiere usar como entry point
           cp server.js .next/standalone/custom-server.js
 
+      - name: Cleanup Target
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.SSH_KEY }}
+          password: ${{ secrets.SSH_PASSWORD }}
+          port: ${{ secrets.PORT }}
+          script: |
+            mkdir -p ${{ secrets.TARGET }}
+            rm -rf ${{ secrets.TARGET }}/*
+            rm -rf ${{ secrets.TARGET }}/.next
+            # No borramos el .env si existe para persistir config
+            # find ${{ secrets.TARGET }} -mindepth 1 ! -name '.env' -delete
+
       - name: Copy files via SCP
         uses: appleboy/scp-action@v0.1.7
         with:
@@ -53,7 +68,6 @@ jobs:
           target: ${{ secrets.TARGET }}
           strip_components: 2
           overwrite: true
-          rm: true
 
       - name: Run SSH commands
         uses: appleboy/ssh-action@v1.0.3
