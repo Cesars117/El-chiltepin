@@ -120,5 +120,11 @@ jobs:
               # Usamos server.js directamente que es el generado por Next.js
               $PM2_BIN restart el-chiltepin || $PM2_BIN start server.js --name el-chiltepin
             else
-              echo "Despliegue completado. REINICIA manualmente en hPanel -> Node.js -> Restart."
+              echo "PM2 no encontrado, usando nohup como fallback..."
+              # Matar procesos de node previos para evitar conflictos de puerto
+              pkill -u $(whoami) node || true
+              # Arrancar en background
+              nohup $NODE_BIN server.js > app.log 2>&1 &
+              sleep 2
+              echo "App arrancada con nohup. Despliegue completado."
             fi
