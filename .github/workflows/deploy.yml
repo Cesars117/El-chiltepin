@@ -92,39 +92,27 @@ jobs:
           script: |
             cd ${{ secrets.TARGET }}
             
-            # Intentar localizar Node y NPM dinámicamente
-            echo "Buscando rutas de ejecución..."
-            export PATH=$PATH:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:$HOME/bin:$HOME/.local/bin
+            # Usar la ruta de Node detectada en el paso anterior
+            NODE_BIN="/opt/alt/alt-nodejs18/root/usr/bin/node"
+            export PATH=$(dirname $NODE_BIN):$PATH
             
-            NODE_PATH=$(which node 2>/dev/null || find /opt/alt/alt-nodejs* -name node -type f -executable -print -quit 2>/dev/null)
-            NPM_PATH=$(which npm 2>/dev/null || find /opt/alt/alt-nodejs* -name npm -type f -executable -print -quit 2>/dev/null)
+            echo "Usando Node en: $NODE_BIN"
             
-            if [ -n "$NODE_PATH" ]; then
-              export PATH=$(dirname $NODE_PATH):$PATH
-              echo "Node encontrado en: $NODE_PATH"
-            fi
-            
-            # Ajustar permisos de forma silenciosa y recursiva
-            echo "Ajustando permisos de forma segura..."
+            # Ajustar permisos silenciosamente
+            echo "Ajustando permisos..."
             chmod -R 755 . 2>/dev/null || true
             
-            # Configurar Prisma
+            # Configurar Prisma usando la ruta absoluta de node
             echo "Verificando cliente de Prisma..."
             if [ ! -d "./node_modules/.prisma" ]; then
-              echo "Cliente no encontrado, intentando generar..."
-              npx prisma generate || $NODE_PATH node_modules/.bin/prisma generate || echo "Fallo al generar Prisma"
+              $NODE_BIN node_modules/.bin/prisma generate || echo "Advertencia: No se pudo generar Prisma"
             fi
             
-            # Reiniciar la aplicación con PM2 o informar si no existe
-            echo "Gestionando proceso con PM2..."
-            PM2_BIN=$(which pm2 2>/dev/null || find $HOME -name pm2 -type f -executable -print -quit 2>/dev/null || find /usr/local/bin -name pm2 -type f -executable -print -quit 2>/dev/null || echo "pm2")
-            
-            if command -v $PM2_BIN >/dev/null 2>&1; then
+            # Gestionar el proceso
+            echo "Finalizando despliegue..."
+            PM2_BIN=$(which pm2 2>/dev/null)
+            if [ -n "$PM2_BIN" ]; then
               $PM2_BIN restart el-chiltepin || $PM2_BIN start server.js --name el-chiltepin
             else
-              echo "ADVERTENCIA: PM2 no encontrado. Si estás usando el selector de Node.js de Hostinger, reinicia la app desde el panel."
-              echo "Intentando inicio manual básico para verificar..."
-              # No podemos dejarlo corriendo en background fácilmente sin PM2 o nohup
-              # pero al menos intentamos ver si arranca
-              # nohup $NODE_PATH server.js > output.log 2>&1 &
+              echo "Despliegue completado. Si la web no carga, reinicia la app desde el hPanel de Hostinger."
             fi
