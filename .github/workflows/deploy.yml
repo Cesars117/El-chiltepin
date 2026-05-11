@@ -21,6 +21,13 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Generate Prisma Client and Temp DB
+        run: |
+          npx prisma generate
+          npx prisma db push --accept-data-loss
+        env:
+          DATABASE_URL: "file:./prisma/dev.db"
+
       - name: Build project
         run: npm run build
         env:
