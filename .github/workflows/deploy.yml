@@ -113,10 +113,11 @@ jobs:
             echo "--- PRUEBA DE ARRANQUE (5s) ---"
             timeout 5s $NODE_BIN server.js || echo "Prueba de arranque terminada (esto es normal si pasaron los 5s)"
             
-            # Reiniciar app
+            # Reiniciar app usando el server.js generado por Next.js (el de standalone)
             echo "--- REINICIANDO PROCESO ---"
             PM2_BIN=$(which pm2 2>/dev/null)
             if [ -n "$PM2_BIN" ]; then
+              # Usamos server.js directamente que es el generado por Next.js
               $PM2_BIN restart el-chiltepin || $PM2_BIN start server.js --name el-chiltepin
             else
               echo "Despliegue completado. REINICIA manualmente en hPanel -> Node.js -> Restart."
