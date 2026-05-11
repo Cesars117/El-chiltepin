@@ -80,6 +80,12 @@ jobs:
           script: |
             cd ${{ secrets.TARGET }}
             
+            # Intentar cargar el perfil de usuario para tener Node/NPM/PM2 en el PATH
+            export PATH=$PATH:$HOME/bin:$HOME/.local/bin:$HOME/.npm-global/bin
+            [ -f ~/.bashrc ] && . ~/.bashrc
+            [ -f ~/.bash_profile ] && . ~/.bash_profile
+            [ -f ~/.profile ] && . ~/.profile
+            
             # Ajustar permisos para evitar el error 403
             echo "Ajustando permisos..."
             find . -type d -exec chmod 755 {} \;
@@ -87,9 +93,11 @@ jobs:
             
             # Configurar Prisma
             echo "Generando cliente de Prisma..."
-            npx prisma generate
+            # Intentamos encontrar npx si no está en el path
+            NPX_PATH=$(which npx || echo "npx")
+            $NPX_PATH prisma generate
             
             # Reiniciar la aplicación con PM2
-            # Se usa el server.js de standalone por defecto
             echo "Reiniciando aplicación con PM2..."
-            pm2 restart el-chiltepin || pm2 start server.js --name el-chiltepin
+            PM2_PATH=$(which pm2 || echo "pm2")
+            $PM2_PATH restart el-chiltepin || $PM2_PATH start server.js --name el-chiltepin
