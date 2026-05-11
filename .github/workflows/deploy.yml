@@ -93,11 +93,17 @@ jobs:
             
             # Configurar Prisma
             echo "Generando cliente de Prisma..."
-            # Intentamos encontrar npx si no está en el path
-            NPX_PATH=$(which npx || echo "npx")
-            $NPX_PATH prisma generate
+            # Intentamos usar el binario local si npx falla
+            if command -v npx >/dev/null 2>&1; then
+              npx prisma generate
+            elif [ -f "./node_modules/.bin/prisma" ]; then
+              node ./node_modules/.bin/prisma generate
+            else
+              echo "No se encontró prisma. Intentando instalarlo temporalmente..."
+              npm install prisma --no-save && node ./node_modules/.bin/prisma generate
+            fi
             
             # Reiniciar la aplicación con PM2
             echo "Reiniciando aplicación con PM2..."
-            PM2_PATH=$(which pm2 || echo "pm2")
-            $PM2_PATH restart el-chiltepin || $PM2_PATH start server.js --name el-chiltepin
+            PM2_BIN=$(which pm2 2>/dev/null || find $HOME -name pm2 -type f -executable -print -quit || echo "pm2")
+            $PM2_BIN restart el-chiltepin || $PM2_BIN start server.js --name el-chiltepin
