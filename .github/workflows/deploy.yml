@@ -53,6 +53,7 @@ jobs:
           target: ${{ secrets.TARGET }}
           strip_components: 2
           overwrite: true
+          rm: true
 
       - name: Run SSH commands
         uses: appleboy/ssh-action@v1.0.3
