@@ -96,23 +96,28 @@ jobs:
             NODE_BIN="/opt/alt/alt-nodejs18/root/usr/bin/node"
             export PATH=$(dirname $NODE_BIN):$PATH
             
-            echo "Usando Node en: $NODE_BIN"
-            
-            # Ajustar permisos silenciosamente
-            echo "Ajustando permisos..."
+            echo "--- DIAGNÓSTICO DE PERMISOS ---"
+            cd ..
+            chmod 755 $(basename ${{ secrets.TARGET }}) 2>/dev/null || true
+            cd ${{ secrets.TARGET }}
             chmod -R 755 . 2>/dev/null || true
+            ls -la . | head -n 20
             
-            # Configurar Prisma usando la ruta absoluta de node
-            echo "Verificando cliente de Prisma..."
+            # Configurar Prisma
+            echo "--- CONFIGURANDO PRISMA ---"
             if [ ! -d "./node_modules/.prisma" ]; then
               $NODE_BIN node_modules/.bin/prisma generate || echo "Advertencia: No se pudo generar Prisma"
             fi
             
-            # Gestionar el proceso
-            echo "Finalizando despliegue..."
+            # Prueba de arranque rápida (5 segundos) para ver errores
+            echo "--- PRUEBA DE ARRANQUE (5s) ---"
+            timeout 5s $NODE_BIN server.js || echo "Prueba de arranque terminada (esto es normal si pasaron los 5s)"
+            
+            # Reiniciar app
+            echo "--- REINICIANDO PROCESO ---"
             PM2_BIN=$(which pm2 2>/dev/null)
             if [ -n "$PM2_BIN" ]; then
               $PM2_BIN restart el-chiltepin || $PM2_BIN start server.js --name el-chiltepin
             else
-              echo "Despliegue completado. Si la web no carga, reinicia la app desde el hPanel de Hostinger."
+              echo "Despliegue completado. REINICIA manualmente en hPanel -> Node.js -> Restart."
             fi
