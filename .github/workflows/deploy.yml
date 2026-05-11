@@ -49,6 +49,7 @@ jobs:
           key: ${{ secrets.SSH_KEY }}
           password: ${{ secrets.SSH_PASSWORD }}
           port: ${{ secrets.PORT }}
+          timeout: 60s
           script: |
             mkdir -p ${{ secrets.TARGET }}
             rm -rf ${{ secrets.TARGET }}/*
@@ -64,6 +65,7 @@ jobs:
           key: ${{ secrets.SSH_KEY }}
           password: ${{ secrets.SSH_PASSWORD }}
           port: ${{ secrets.PORT }}
+          timeout: 60s
           source: ".next/standalone/*"
           target: ${{ secrets.TARGET }}
           strip_components: 2
@@ -77,6 +79,7 @@ jobs:
           key: ${{ secrets.SSH_KEY }}
           password: ${{ secrets.SSH_PASSWORD }}
           port: ${{ secrets.PORT }}
+          timeout: 60s
           script: |
             cd ${{ secrets.TARGET }}
             
