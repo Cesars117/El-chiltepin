@@ -23,6 +23,8 @@ jobs:
 
       - name: Build project
         run: npm run build
+        env:
+          DATABASE_URL: "file:./prisma/dev.db"
 
       - name: Prepare Standalone Bundle
         run: |
