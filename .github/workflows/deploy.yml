@@ -38,7 +38,10 @@ jobs:
           cp -r public .next/standalone/public
           cp -r .next/static .next/standalone/.next/static
           cp -r prisma .next/standalone/prisma
-          # Copiamos también el archivo server.js personalizado por si se prefiere usar como entry point
+          # Copiamos el cliente de Prisma generado para evitar generarlo en el servidor
+          mkdir -p .next/standalone/node_modules/.prisma
+          cp -r node_modules/.prisma/* .next/standalone/node_modules/.prisma/
+          # Copiamos también el archivo server.js personalizado
           cp server.js .next/standalone/custom-server.js
 
       - name: Cleanup Target
@@ -51,11 +54,14 @@ jobs:
           port: ${{ secrets.PORT }}
           timeout: 60s
           script: |
+            # Intentar detener la aplicación para liberar archivos
+            export PATH=$PATH:$HOME/bin:$HOME/.local/bin:$HOME/.npm-global/bin
+            PM2_BIN=$(which pm2 2>/dev/null || find $HOME -name pm2 -type f -executable -print -quit || echo "pm2")
+            $PM2_BIN stop el-chiltepin || true
+            
             mkdir -p ${{ secrets.TARGET }}
-            rm -rf ${{ secrets.TARGET }}/*
-            rm -rf ${{ secrets.TARGET }}/.next
-            # No borramos el .env si existe para persistir config
-            # find ${{ secrets.TARGET }} -mindepth 1 ! -name '.env' -delete
+            # Limpiar el directorio preservando el .env
+            find ${{ secrets.TARGET }} -mindepth 1 ! -name '.env' -delete || rm -rf ${{ secrets.TARGET }}/*
 
       - name: Copy files via SCP
         uses: appleboy/scp-action@v0.1.7
@@ -83,27 +89,28 @@ jobs:
           script: |
             cd ${{ secrets.TARGET }}
             
-            # Intentar cargar el perfil de usuario para tener Node/NPM/PM2 en el PATH
-            export PATH=$PATH:$HOME/bin:$HOME/.local/bin:$HOME/.npm-global/bin
+            # Cargar perfiles y rutas comunes en Hostinger
+            export PATH=$PATH:$HOME/bin:$HOME/.local/bin:$HOME/.npm-global/bin:/usr/local/bin:/usr/bin
             [ -f ~/.bashrc ] && . ~/.bashrc
             [ -f ~/.bash_profile ] && . ~/.bash_profile
             [ -f ~/.profile ] && . ~/.profile
             
-            # Ajustar permisos para evitar el error 403
+            # Ajustar permisos (ignorar errores en archivos que no pertenecen al usuario si los hay)
             echo "Ajustando permisos..."
-            find . -type d -exec chmod 755 {} \;
-            find . -type f -exec chmod 644 {} \;
+            find . -type d -exec chmod 755 {} + 2>/dev/null || true
+            find . -type f -exec chmod 644 {} + 2>/dev/null || true
             
-            # Configurar Prisma
-            echo "Generando cliente de Prisma..."
-            # Intentamos usar el binario local si npx falla
-            if command -v npx >/dev/null 2>&1; then
-              npx prisma generate
-            elif [ -f "./node_modules/.bin/prisma" ]; then
-              node ./node_modules/.bin/prisma generate
-            else
-              echo "No se encontró prisma. Intentando instalarlo temporalmente..."
-              npm install prisma --no-save && node ./node_modules/.bin/prisma generate
+            # Configurar Prisma (solo si es necesario, ya que lo subimos en el bundle)
+            echo "Verificando cliente de Prisma..."
+            if [ ! -d "./node_modules/.prisma" ]; then
+              echo "Cliente no encontrado, intentando generar..."
+              if command -v npx >/dev/null 2>&1; then
+                npx prisma generate
+              elif [ -f "./node_modules/.bin/prisma" ]; then
+                node ./node_modules/.bin/prisma generate
+              else
+                npm install prisma --no-save && node ./node_modules/.bin/prisma generate
+              fi
             fi
             
             # Reiniciar la aplicación con PM2
